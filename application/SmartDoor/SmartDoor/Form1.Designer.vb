@@ -33,7 +33,13 @@ Partial Class Form1
         Me.closebtn = New System.Windows.Forms.Button()
         Me.statuslabel = New System.Windows.Forms.Label()
         Me.Button3 = New System.Windows.Forms.Button()
+        Me.receivebox = New System.Windows.Forms.TextBox()
+        Me.sendbox = New System.Windows.Forms.TextBox()
+        Me.receivebytes = New System.Windows.Forms.Label()
         Me.SuspendLayout()
+        '
+        'SerialPort1
+        '
         '
         'portnamebox
         '
@@ -115,11 +121,37 @@ Partial Class Form1
         Me.Button3.Text = "发送数据"
         Me.Button3.UseVisualStyleBackColor = True
         '
+        'receivebox
+        '
+        Me.receivebox.Location = New System.Drawing.Point(56, 162)
+        Me.receivebox.Name = "receivebox"
+        Me.receivebox.Size = New System.Drawing.Size(100, 21)
+        Me.receivebox.TabIndex = 9
+        '
+        'sendbox
+        '
+        Me.sendbox.Location = New System.Drawing.Point(56, 206)
+        Me.sendbox.Name = "sendbox"
+        Me.sendbox.Size = New System.Drawing.Size(100, 21)
+        Me.sendbox.TabIndex = 10
+        '
+        'receivebytes
+        '
+        Me.receivebytes.AutoSize = True
+        Me.receivebytes.Location = New System.Drawing.Point(258, 165)
+        Me.receivebytes.Name = "receivebytes"
+        Me.receivebytes.Size = New System.Drawing.Size(41, 12)
+        Me.receivebytes.TabIndex = 11
+        Me.receivebytes.Text = "Label4"
+        '
         'Form1
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 12.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.ClientSize = New System.Drawing.Size(416, 324)
+        Me.Controls.Add(Me.receivebytes)
+        Me.Controls.Add(Me.sendbox)
+        Me.Controls.Add(Me.receivebox)
         Me.Controls.Add(Me.Button3)
         Me.Controls.Add(Me.statuslabel)
         Me.Controls.Add(Me.closebtn)
@@ -145,5 +177,8 @@ Partial Class Form1
     Friend WithEvents closebtn As System.Windows.Forms.Button
     Friend WithEvents statuslabel As System.Windows.Forms.Label
     Friend WithEvents Button3 As System.Windows.Forms.Button
+    Friend WithEvents receivebox As System.Windows.Forms.TextBox
+    Friend WithEvents sendbox As System.Windows.Forms.TextBox
+    Friend WithEvents receivebytes As System.Windows.Forms.Label
 
 End Class
