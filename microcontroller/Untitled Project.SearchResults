@@ -1,0 +1,7 @@
+---- uartData Matches (6 in 2 files) ----
+Business.c:extern uint8 uartData[20];
+Business.c:					uartSendStr(uartData);
+Business.c:					dealLocker(uartData);
+Uart.c:uint8 uartData[UARTDATA_LEN];
+Uart.c:	uartData[uartIndex] = a;
+Uart.c:		uartData[i] = 0;

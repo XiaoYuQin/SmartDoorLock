@@ -1,0 +1,170 @@
+C51 COMPILER V9.00   BUSINESS                                                              03/26/2016 01:06:20 PAGE 1   
+
+
+C51 COMPILER V9.00, COMPILATION OF MODULE BUSINESS
+OBJECT MODULE PLACED IN business.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE business.c ROM(COMPACT) BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include "user_sys.h"
+   2          #include "uart.h"
+   3          #include "business.h"
+   4          #include <string.h>
+   5          #include <stdio.h>
+   6          #include <reg52.h>
+   7          
+   8          #define LOCKER_TIMER 7
+   9          
+  10          extern app_Event getApp;
+  11          
+  12          extern uint8 uartData[20];
+  13          extern uint8 uartIndex;
+  14          
+  15          sbit wela2=P1^1;        //定义位选
+  16          int timer;
+  17          uint8 code table[]={0x3f,0x06,0x5b,0x4f,0x66,0x6d,0x7d,0x07,0x7f,0x6f};//不带小数点的共阴数码管段值
+  18          sbit lockerPin=P1^7;    //定义位选
+  19          
+  20          
+  21          typedef enum{
+  22                  LOCK,
+  23                  UNLOCK
+  24          }LOCKER_STATUS;
+  25          
+  26          LOCKER_STATUS lockerStatus = LOCK;
+  27          
+  28          
+  29          
+  30          void userBusinessEventHandle()
+  31          {
+  32   1              uint8 i;
+  33   1              for(i=0;i<EVENT_NUMBER;i++)
+  34   1              {
+  35   2                      if((getApp.eventEDable_t[i]==ENABLE)&&(getApp.eventResultFlag_t[i]==ENABLE)&&(getApp.eventDoCount_t[i]<g
+             -etApp.eventSetCount_t[i]))
+  36   2                      {
+  37   3                              userSystemSetEventDone(i);
+  38   3                              switch(getApp.eventId_t[i])
+  39   3                              {
+  40   4                                      case EVENT_UART_RECIVE:
+  41   4                                      {
+  42   5                                              uartSendStr(uartData);
+  43   5                                              dealLocker(uartData);
+  44   5                                              uartDataClean();
+  45   5                                              setEvent(EVENT_UART_RECIVE, ENABLE,20,1);
+  46   5                                      }
+  47   4                                      break;
+  48   4                                      case EVENT_LOCK_LOCKER:
+  49   4                                      {
+  50   5                                              lockerStatus = UNLOCK;
+  51   5                                              reportLockerStatus();
+  52   5                                              uartSendStr("UNLOCK\r\n");
+  53   5                                      }
+  54   4                                      break;
+C51 COMPILER V9.00   BUSINESS                                                              03/26/2016 01:06:20 PAGE 2   
+
+  55   4                                      case EVENT_LOCKER_STATUS_RSP:
+  56   4                                      {
+  57   5                                              reportLockerStatus();
+  58   5                                              setEvent(EVENT_LOCKER_STATUS_RSP, ENABLE,300,1);
+  59   5                                      }
+  60   4                                      break;
+  61   4                                      /*锁倒计时*/
+  62   4                                      case EVENT_LOCKER_DAOJISHI:
+  63   4                                      {
+  64   5                                              
+  65   5                              
+  66   5                                              P0=table[timer];        //传递数据
+  67   5                                              P1 |= 0x01;             //打开位选
+  68   5                                              P1 &= 0xF9;
+  69   5                                              wela2 = 0;         //关闭位选
+  70   5                                              timer = timer -1;
+  71   5                                                      
+  72   5      
+  73   5                                              if(timer < -1)
+  74   5                                              {
+  75   6                                                      timer =LOCKER_TIMER;
+  76   6                                                      setEvent(EVENT_LOCKER_LOCKED, ENABLE,1,1);
+  77   6                                                      setEvent(EVENT_LOCKER_DAOJISHI, DISABLE,0,0);
+  78   6                                                      lockerStatus = LOCK;
+  79   6                                                      reportLockerStatus();
+  80   6                                              }
+  81   5                                              else
+  82   5                                              {                                       
+  83   6                                                      uartSendStr("EVENT_LOCKER_DAOJISHI\r\n");
+  84   6                                                      setEvent(EVENT_LOCKER_DAOJISHI, ENABLE,200,1);
+  85   6                                                      lockerStatus = UNLOCK;
+  86   6                                                      reportLockerStatus();                                           
+  87   6                                              }
+  88   5                                      }
+  89   4                                      break;
+  90   4                                      case EVENT_LOCKER_LOCKED:
+  91   4                                              P0 =0x40;       //传递数据
+  92   4                                              P1 |= 0x01;             //打开位选
+  93   4                                              P1 &= 0xF9;
+  94   4                                              wela2 = 0;         //关闭位选
+  95   4                                              break;
+  96   4                                      default:
+  97   4                                              break;
+  98   4                              
+  99   4                              }
+ 100   3                      }
+ 101   2                      else if((getApp.eventEDable_t[i]==ENABLE)&&(getApp.eventDoCount_t[i]>=getApp.eventSetCount_t[i]))
+ 102   2                      {
+ 103   3                              getApp.eventEDable_t[i]=DISABLE;
+ 104   3                      }
+ 105   2              }
+ 106   1      }
+ 107          void dealLocker(uint8 *cmd)
+ 108          {
+ 109   1              if(uartIndex < 5 ) return;
+ 110   1              if(uartIndex == 0) return;
+ 111   1              
+ 112   1              if((cmd[0] == 'U')&&(cmd[1] == 'N')&&cmd[2] == 'L'&&cmd[3] == 'O'&&cmd[4] == 'C'&&cmd[5] == 'K'){
+ 113   2                      lockerPin = 1;
+ 114   2                      timer = LOCKER_TIMER;
+ 115   2                      uartSendStr("open locker 5s\r\n");
+ 116   2                      lockerStatus = UNLOCK;
+C51 COMPILER V9.00   BUSINESS                                                              03/26/2016 01:06:20 PAGE 3   
+
+ 117   2                      reportLockerStatus();
+ 118   2                      //setEvent(EVENT_LOCK_LOCKER, ENABLE,500,1);
+ 119   2                      setEvent(EVENT_LOCKER_DAOJISHI, ENABLE,1,1);
+ 120   2              }
+ 121   1              if((cmd[0] == 'T')&&(cmd[1] == 'O')&&cmd[2] == 'L'&&cmd[3] == 'O'&&cmd[4] == 'C'&&cmd[5] == 'K'){
+ 122   2      
+ 123   2                      timer = 0;
+ 124   2                      lockerStatus = LOCK;
+ 125   2                      reportLockerStatus();
+ 126   2                      setEvent(EVENT_LOCKER_LOCKED, ENABLE,1,1);
+ 127   2                      setEvent(EVENT_LOCKER_DAOJISHI, DISABLE,0,0);
+ 128   2              }
+ 129   1      }
+ 130          void reportLockerStatus()
+ 131          {
+ 132   1              if(lockerStatus == UNLOCK)
+ 133   1              {
+ 134   2                      lockerPin = 1;
+ 135   2                      uartSendStr("unlock\r\n");
+ 136   2              }
+ 137   1              else
+ 138   1              {
+ 139   2                      lockerPin = 0;
+ 140   2                      uartSendStr("lock\r\n");
+ 141   2              }
+ 142   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    562    ----
+   CONSTANT SIZE    =     76    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      3       4
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

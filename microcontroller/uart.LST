@@ -1,0 +1,134 @@
+C51 COMPILER V9.00   UART                                                                  03/26/2016 01:06:19 PAGE 1   
+
+
+C51 COMPILER V9.00, COMPILATION OF MODULE UART
+OBJECT MODULE PLACED IN uart.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE uart.c ROM(COMPACT) BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include "reg52.h"
+   2          #include <string.h>
+   3          #include <stdarg.h>
+   4          #include <stdio.h>
+   5          #include "type.h"
+   6          
+   7          #include "uart.h"
+   8          
+   9          #define UARTDATA_LEN 20
+  10          
+  11          uint8 uartData[UARTDATA_LEN];
+  12          uint8 uartIndex;
+  13          /*------------------------------------------------
+  14                                                   串口初始化
+  15           ------------------------------------------------*/
+  16           void InitUART()
+  17           {
+  18   1      #if 1
+  19   1               SCON  = 0x50;                           // SCON: 模式 1, 8-bit UART, 使能接收  
+  20   1               TMOD |= 0x20;                           // TMOD: timer 1, mode 2, 8-bit 重装
+  21   1               TH1   = 0xFD;                           // TH1:  重装值 9600 波特率 晶振 11.0592MHz  
+  22   1               TL1=0xfd;
+  23   1               TR1   = 1;                              // TR1:  timer 1 打开                                             
+  24   1              SM0=0;                   //设置串行口工作方式
+  25   1              SM1=1;
+  26   1              REN=1;          //允许串行接收位
+  27   1              EA=1;           //开启总中断
+  28   1              ES=1;                   //开启串口中断
+  29   1               //ES    = 1;                              //打开串口中断
+  30   1      #endif
+  31   1       }
+  32          
+  33           
+  34           /*------------------------------------------------
+  35                                                   发送一个字节
+  36           ------------------------------------------------*/
+  37           void uartSendByte(unsigned char dat)
+  38           {
+  39   1              ES=0;
+  40   1              SBUF = dat;
+  41   1              while(!TI);
+  42   1                      TI = 0;
+  43   1              ES=1;                   //打开中断
+  44   1       }
+  45           /*------------------------------------------------
+  46                                                   发送一个字符串
+  47           ------------------------------------------------*/
+  48           void uartSendStr(unsigned char *s)
+  49           {
+  50   1        while(*s!='\0')// \0 表示字符串结束标志，
+  51   1                                       //通过检测是否字符串末尾
+  52   1         {
+  53   2         uartSendByte(*s);
+  54   2         s++;
+  55   2         }
+C51 COMPILER V9.00   UART                                                                  03/26/2016 01:06:19 PAGE 2   
+
+  56   1       }
+  57          void uartSendForStr(unsigned char *s,unsigned int len)
+  58          {
+  59   1              int i;
+  60   1              for(i=0;i<len;i++)
+  61   1              {
+  62   2                      uartSendByte(s[i]);
+  63   2              }
+  64   1      }
+  65          void uartRecive() interrupt 4
+  66          {
+  67   1              char a;
+  68   1              RI=0;                   //接收到数据后，将RI置0
+  69   1              a=SBUF;                 //接收数据
+  70   1              uartData[uartIndex] = a;
+  71   1              uartIndex++;
+  72   1              if(uartIndex > UARTDATA_LEN-1)  uartIndex = 0;
+  73   1      }
+  74          void uartDataClean(){
+  75   1              uint8 i;
+  76   1              for(i = 0;i<UARTDATA_LEN;i++){
+  77   2                      uartData[i] = 0;
+  78   2              }
+  79   1              uartIndex = 0;
+  80   1      }
+  81          #if 0
+              void debug(uint8 *fmt ,...)
+              {
+              
+                      va_list arg_ptr;
+                      uint8    LocalText[64];
+                      uint8    cnt;
+                      uint8    m;
+                      for(cnt=0 ; cnt<64 ; cnt++) 
+                      {
+                              LocalText[cnt] = 0x00;
+                      }
+              
+                      va_start(arg_ptr, fmt);
+                      vsprintf(LocalText, fmt, arg_ptr);
+                      va_end(arg_ptr);
+                      for(m=0 ; m<64 ; m++) 
+                      {
+                              if(LocalText[m]==0x00)
+                              {
+                                      break;
+                              }
+                      }
+                      uartSendForStr(LocalText,m);
+              
+              }
+              #endif  
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    159    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     21       5
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+C51 COMPILER V9.00   UART                                                                  03/26/2016 01:06:19 PAGE 3   
+
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
